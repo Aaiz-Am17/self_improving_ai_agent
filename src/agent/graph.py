@@ -29,7 +29,7 @@ class AgentState(TypedDict):
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", #
     temperature=0,
-    google_api_key="Your Api Key" 
+    google_api_key="AIzaSyCoUhK2Fnh9BmGN3aCqVufPgIygyrcv6B8" 
 )
 
 # ------------------------------
