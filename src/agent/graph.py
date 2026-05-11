@@ -1,102 +1,218 @@
-from typing import TypedDict, Annotated
-from langchain_core.messages import BaseMessage
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage
-from langchain_core.messages import AIMessage
-from langchain_core.messages import ToolMessage
-from langchain_core.messages import SystemMessage
-
-from src.tools.tools import inspect_dataset, detect_missing_values
-
-from langgraph.graph.message import add_messages
-
-
-
-# ------------------------------
-# STATE
-# ------------------------------
-
-class AgentState(TypedDict):
-    messages: Annotated[list[BaseMessage], add_messages]
-
-
-# ------------------------------
-# LLM (Updated for Gemini)
-# ------------------------------
-# Using 'gemini-2.5-flash' or 'gemini-1.5-flash' as the fast, cost-effective equivalent to gpt-4o-mini
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash", #
-    temperature=0,
-    google_api_key="YOur_Google_API_Key_Here",  # Replace with your actual API key
+from langgraph.graph import (
+    StateGraph,
+    END
 )
 
-# ------------------------------
-# TOOLS
-# ------------------------------
-tools = [inspect_dataset, detect_missing_values]
+from src.agent.state import AutoMLState
 
-# Gemini supports LangChain's standard tool binding perfectly
-llm_with_tools = llm.bind_tools(tools)
+from src.agent.nodes.dataset_node import (
+    dataset_analyst_node
+)
 
+from src.agent.nodes.rag_node import (
+    rag_node
+)
 
-# ------------------------------
-# AGENT NODE
-# ------------------------------
+from src.agent.nodes.planner_node import (
+    planner_node
+)
 
-def agent_node(state: AgentState):
+from src.agent.nodes.validator_node import (
+    validator_node
+)
 
-    messages = state["messages"]
+from src.agent.nodes.execution_node import (
+    execution_node
+)
 
-    response = llm_with_tools.invoke(messages)
+from src.agent.routers.main_router import (
+    main_router
+)
 
-    return {"messages": [response]}
-
-
-# ------------------------------
-# TOOL NODE
-# ------------------------------
-
-tool_node = ToolNode(tools)
-
-
-# ------------------------------
-# ROUTER
-# ------------------------------
-
-def router(state: AgentState):
-
-    last_message = state["messages"][-1]
-
-    if last_message.tool_calls:
-        return "tool"
-
-    return END
+from src.persistence.checkpointer import (
+    checkpointer
+)
 
 
-# ------------------------------
-# GRAPH
-# ------------------------------
+# =====================================================
+# GRAPH BUILDER
+# =====================================================
 
-def build_graph():
+builder = StateGraph(AutoMLState)
 
-    graph = StateGraph(AgentState)
 
-    graph.add_node("agent", agent_node)
-    graph.add_node("tool", tool_node)
+# =====================================================
+# ADD NODES
+# =====================================================
 
-    graph.set_entry_point("agent")
+builder.add_node(
+    "dataset_analyst",
+    dataset_analyst_node
+)
 
-    graph.add_conditional_edges(
-        "agent",
-        router,
-        {
-            "tool": "tool",
-            END: END,
-        },
-    )
+builder.add_node(
+    "rag_agent",
+    rag_node
+)
 
-    graph.add_edge("tool", "agent")
+builder.add_node(
+    "pipeline_architect",
+    planner_node
+)
 
-    return graph.compile()
+builder.add_node(
+    "validator",
+    validator_node
+)
+
+builder.add_node(
+    "execution_agent",
+    execution_node
+)
+
+
+# =====================================================
+# CONDITIONAL ENTRY POINT
+# =====================================================
+
+builder.set_conditional_entry_point(
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+# =====================================================
+# CONDITIONAL EDGES
+# =====================================================
+
+builder.add_conditional_edges(
+
+    "dataset_analyst",
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+builder.add_conditional_edges(
+
+    "rag_agent",
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+builder.add_conditional_edges(
+
+    "pipeline_architect",
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+builder.add_conditional_edges(
+
+    "validator",
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+builder.add_conditional_edges(
+
+    "execution_agent",
+
+    main_router,
+
+    {
+        "dataset_analyst": "dataset_analyst",
+
+        "rag_agent": "rag_agent",
+
+        "pipeline_architect": "pipeline_architect",
+
+        "validator": "validator",
+
+        "execution_agent": "execution_agent",
+
+        "finish": END
+    }
+)
+
+
+# =====================================================
+# COMPILE GRAPH
+# =====================================================
+
+graph = builder.compile(
+    checkpointer=checkpointer
+)

@@ -1,0 +1,229 @@
+Standardization, or mean removal and variance scaling
+Standardization of datasets is a common requirement for many machine learning estimators implemented in scikit-learn; they might behave badly if the individual features do not more or less look like standard normally distributed data: Gaussian with zero mean and unit variance.
+
+In practice we often ignore the shape of the distribution and just transform the data to center it by removing the mean value of each feature, then scale it by dividing non-constant features by their standard deviation.
+
+For instance, many elements used in the objective function of a learning algorithm (such as the RBF kernel of Support Vector Machines or the l1 and l2 regularizers of linear models) may assume that all features are centered around zero or have variance in the same order. If a feature has a variance that is orders of magnitude larger than others, it might dominate the objective function and make the estimator unable to learn from other features correctly as expected.
+
+The preprocessing module provides the StandardScaler utility class, which is a quick and easy way to perform the following operation on an array-like dataset:
+
+from sklearn import preprocessing
+import numpy as np
+X_train = np.array([[ 1., -1.,  2.],
+                    [ 2.,  0.,  0.],
+                    [ 0.,  1., -1.]])
+scaler = preprocessing.StandardScaler().fit(X_train)
+scaler
+StandardScaler()
+
+scaler.mean_
+array([1., 0., 0.33])
+
+scaler.scale_
+array([0.81, 0.81, 1.24])
+
+X_scaled = scaler.transform(X_train)
+X_scaled
+array([[ 0.  , -1.22,  1.33 ],
+       [ 1.22,  0.  , -0.267],
+       [-1.22,  1.22, -1.06 ]])
+Scaled data has zero mean and unit variance:
+
+X_scaled.mean(axis=0)
+array([0., 0., 0.])
+
+X_scaled.std(axis=0)
+array([1., 1., 1.])
+This class implements the Transformer API to compute the mean and standard deviation on a training set so as to be able to later re-apply the same transformation on the testing set. This class is hence suitable for use in the early steps of a Pipeline:
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+X, y = make_classification(random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+pipe = make_pipeline(StandardScaler(), LogisticRegression())
+pipe.fit(X_train, y_train)  # apply scaling on training data
+Pipeline(steps=[('standardscaler', StandardScaler()),
+                ('logisticregression', LogisticRegression())])
+
+pipe.score(X_test, y_test)  # apply scaling on testing data, without leaking training data.
+0.96
+It is possible to disable either centering or scaling by either passing with_mean=False or with_std=False to the constructor of StandardScaler.
+
+7.3.1.1. Scaling features to a range
+An alternative standardization is scaling features to lie between a given minimum and maximum value, often between zero and one, or so that the maximum absolute value of each feature is scaled to unit size. This can be achieved using MinMaxScaler or MaxAbsScaler, respectively.
+
+The motivation to use this scaling includes robustness to very small standard deviations of features and preserving zero entries in sparse data.
+
+Here is an example to scale a toy data matrix to the [0, 1] range:
+
+X_train = np.array([[ 1., -1.,  2.],
+                    [ 2.,  0.,  0.],
+                    [ 0.,  1., -1.]])
+
+min_max_scaler = preprocessing.MinMaxScaler()
+X_train_minmax = min_max_scaler.fit_transform(X_train)
+X_train_minmax
+array([[0.5       , 0.        , 1.        ],
+       [1.        , 0.5       , 0.33333333],
+       [0.        , 1.        , 0.        ]])
+The same instance of the transformer can then be applied to some new test data unseen during the fit call: the same scaling and shifting operations will be applied to be consistent with the transformation performed on the train data:
+
+X_test = np.array([[-3., -1.,  4.]])
+X_test_minmax = min_max_scaler.transform(X_test)
+X_test_minmax
+array([[-1.5       ,  0.        ,  1.66666667]])
+It is possible to introspect the scaler attributes to find about the exact nature of the transformation learned on the training data:
+
+min_max_scaler.scale_
+array([0.5       , 0.5       , 0.33])
+
+min_max_scaler.min_
+array([0.        , 0.5       , 0.33])
+If MinMaxScaler is given an explicit feature_range=(min, max) the full formula is:
+
+X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+
+X_scaled = X_std * (max - min) + min
+MaxAbsScaler works in a very similar fashion, but scales in a way that the training data lies within the range [-1, 1] by dividing through the largest maximum value in each feature. It is meant for data that is already centered at zero or sparse data.
+
+Here is how to use the toy data from the previous example with this scaler:
+
+X_train = np.array([[ 1., -1.,  2.],
+                    [ 2.,  0.,  0.],
+                    [ 0.,  1., -1.]])
+
+max_abs_scaler = preprocessing.MaxAbsScaler()
+X_train_maxabs = max_abs_scaler.fit_transform(X_train)
+X_train_maxabs
+array([[ 0.5, -1. ,  1. ],
+       [ 1. ,  0. ,  0. ],
+       [ 0. ,  1. , -0.5]])
+X_test = np.array([[ -3., -1.,  4.]])
+X_test_maxabs = max_abs_scaler.transform(X_test)
+X_test_maxabs
+array([[-1.5, -1. ,  2. ]])
+max_abs_scaler.scale_
+array([2.,  1.,  2.])
+7.3.1.2. Scaling sparse data
+Centering sparse data would destroy the sparseness structure in the data, and thus rarely is a sensible thing to do. However, it can make sense to scale sparse inputs, especially if features are on different scales.
+
+MaxAbsScaler was specifically designed for scaling sparse data, and is the recommended way to go about this. However, StandardScaler can accept scipy.sparse matrices as input, as long as with_mean=False is explicitly passed to the constructor. Otherwise a ValueError will be raised as silently centering would break the sparsity and would often crash the execution by allocating excessive amounts of memory unintentionally. RobustScaler cannot be fitted to sparse inputs, but you can use the transform method on sparse inputs.
+
+Note that the scalers accept both Compressed Sparse Rows and Compressed Sparse Columns format (see scipy.sparse.csr_matrix and scipy.sparse.csc_matrix). Any other sparse input will be converted to the Compressed Sparse Rows representation. To avoid unnecessary memory copies, it is recommended to choose the CSR or CSC representation upstream.
+
+Finally, if the centered data is expected to be small enough, explicitly converting the input to an array using the toarray method of sparse matrices is another option.
+
+7.3.1.3. Scaling data with outliers
+If your data contains many outliers, scaling using the mean and variance of the data is likely to not work very well. In these cases, you can use RobustScaler as a drop-in replacement instead. It uses more robust estimates for the center and range of your data.
+
+7.3.1.4. Centering kernel matrices
+If you have a kernel matrix of a kernel 
+ that computes a dot product in a feature space (possibly implicitly) defined by a function 
+, a KernelCenterer can transform the kernel matrix so that it contains inner products in the feature space defined by 
+ followed by the removal of the mean in that space. In other words, KernelCenterer computes the centered Gram matrix associated to a positive semidefinite kernel 
+.
+
+7.3.2. Non-linear transformation
+Two types of transformations are available: quantile transforms and power transforms. Both quantile and power transforms are based on monotonic transformations of the features and thus preserve the rank of the values along each feature.
+
+Quantile transforms put all features into the same desired distribution based on the formula 
+ where 
+ is the cumulative distribution function of the feature and 
+ the quantile function of the desired output distribution 
+. This formula is using the two following facts: (i) if 
+ is a random variable with a continuous cumulative distribution function 
+ then 
+ is uniformly distributed on 
+; (ii) if 
+ is a random variable with uniform distribution on 
+ then 
+ has distribution 
+. By performing a rank transformation, a quantile transform smooths out unusual distributions and is less influenced by outliers than scaling methods. It does, however, distort correlations and distances within and across features.
+
+Power transforms are a family of parametric transformations that aim to map data from any distribution to as close to a Gaussian distribution.
+
+7.3.2.1. Mapping to a Uniform distribution
+QuantileTransformer provides a non-parametric transformation to map the data to a uniform distribution with values between 0 and 1:
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
+X_train_trans = quantile_transformer.fit_transform(X_train)
+X_test_trans = quantile_transformer.transform(X_test)
+np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
+array([ 4.3,  5.1,  5.8,  6.5,  7.9])
+This feature corresponds to the sepal length in cm. Once the quantile transformation is applied, those landmarks approach closely the percentiles previously defined:
+
+np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
+
+array([ 0.00 ,  0.24,  0.49,  0.73,  0.99 ])
+This can be confirmed on an independent testing set with similar remarks:
+
+np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
+
+array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
+np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
+
+array([ 0.01,  0.25,  0.46,  0.60 ,  0.94])
+7.3.2.2. Mapping to a Gaussian distribution
+In many modeling scenarios, normality of the features in a dataset is desirable. Power transforms are a family of parametric, monotonic transformations that aim to map data from any distribution to as close to a Gaussian distribution as possible in order to stabilize variance and minimize skewness.
+
+PowerTransformer currently provides two such power transformations, the Yeo-Johnson transform and the Box-Cox transform.
+
+Below are examples of Box-Cox and Yeo-Johnson applied to various probability distributions. Note that when applied to certain distributions, the power transforms achieve very Gaussian-like results, but with others, they are ineffective. This highlights the importance of visualizing the data before and after transformation.
+
+../_images/sphx_glr_plot_map_data_to_normal_001.png
+It is also possible to map data to a normal distribution using QuantileTransformer by setting output_distribution='normal'. Using the earlier example with the iris dataset:
+
+quantile_transformer = preprocessing.QuantileTransformer(
+    output_distribution='normal', random_state=0)
+X_trans = quantile_transformer.fit_transform(X)
+quantile_transformer.quantiles_
+array([[4.3, 2. , 1. , 0.1],
+       [4.4, 2.2, 1.1, 0.1],
+       [4.4, 2.2, 1.2, 0.1],
+       ...,
+       [7.7, 4.1, 6.7, 2.5],
+       [7.7, 4.2, 6.7, 2.5],
+       [7.9, 4.4, 6.9, 2.5]])
+Thus the median of the input becomes the mean of the output, centered at 0. The normal output is clipped so that the input’s minimum and maximum — corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively — do not become infinite under the transformation.
+
+7.3.3. Normalization
+Normalization is the process of scaling individual samples to have unit norm. This process can be useful if you plan to use a quadratic form such as the dot-product or any other kernel to quantify the similarity of any pair of samples.
+
+This assumption is the base of the Vector Space Model often used in text classification and clustering contexts.
+
+The function normalize provides a quick and easy way to perform this operation on a single array-like dataset, either using the l1, l2, or max norms:
+
+X = [[ 1., -1.,  2.],
+     [ 2.,  0.,  0.],
+     [ 0.,  1., -1.]]
+X_normalized = preprocessing.normalize(X, norm='l2')
+
+X_normalized
+array([[ 0.408, -0.408,  0.812],
+       [ 1.   ,  0.   ,  0.   ],
+       [ 0.   ,  0.707, -0.707]])
+The preprocessing module further provides a utility class Normalizer that implements the same operation using the Transformer API (even though the fit method is useless in this case: the class is stateless as this operation treats samples independently).
+
+This class is hence suitable for use in the early steps of a Pipeline:
+
+normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
+normalizer
+Normalizer()
+The normalizer instance can then be used on sample vectors as any transformer:
+
+normalizer.transform(X)
+array([[ 0.408, -0.408,  0.812],
+       [ 1.   ,  0.   ,  0.   ],
+       [ 0.   ,  0.707, -0.707]])
+
+normalizer.transform([[-1.,  1., 0.]])
+array([[-0.707,  0.707,  0.]])
+Note: L2 normalization is also known as spatial sign preprocessing.
