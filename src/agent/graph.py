@@ -25,6 +25,14 @@ from src.agent.nodes.execution_node import (
     execution_node
 )
 
+from src.agent.nodes.guardrail_node import (
+    guardrail_node
+)
+
+from src.agent.nodes.alert_node import (
+    alert_node
+)
+
 from src.agent.routers.main_router import (
     main_router
 )
@@ -35,6 +43,24 @@ from src.persistence.checkpointer import (
 
 
 # =====================================================
+# SECURITY ROUTER
+# =====================================================
+
+def security_router(state: AutoMLState) -> str:
+    """
+    Determines whether the request is safe
+    enough to continue into the main workflow.
+    """
+
+    execution_status = state.get("execution_status", "")
+
+    if execution_status == "BLOCKED":
+        return "alert_node"
+
+    return "main_workflow"
+
+
+# =====================================================
 # GRAPH BUILDER
 # =====================================================
 
@@ -42,7 +68,22 @@ builder = StateGraph(AutoMLState)
 
 
 # =====================================================
-# ADD NODES
+# ADD SECURITY NODES
+# =====================================================
+
+builder.add_node(
+    "guardrail_node",
+    guardrail_node
+)
+
+builder.add_node(
+    "alert_node",
+    alert_node
+)
+
+
+# =====================================================
+# ADD MAIN AGENT NODES
 # =====================================================
 
 builder.add_node(
@@ -72,26 +113,36 @@ builder.add_node(
 
 
 # =====================================================
-# CONDITIONAL ENTRY POINT
+# GRAPH ENTRY POINT
 # =====================================================
 
-builder.set_conditional_entry_point(
+builder.set_entry_point("guardrail_node")
 
-    main_router,
+
+# =====================================================
+# SECURITY ROUTING
+# =====================================================
+
+builder.add_conditional_edges(
+
+    "guardrail_node",
+
+    security_router,
 
     {
-        "dataset_analyst": "dataset_analyst",
-
-        "rag_agent": "rag_agent",
-
-        "pipeline_architect": "pipeline_architect",
-
-        "validator": "validator",
-
-        "execution_agent": "execution_agent",
-
-        "finish": END
+        "alert_node": "alert_node",
+        "main_workflow": "dataset_analyst"
     }
+)
+
+
+# =====================================================
+# ALERT NODE ENDS EXECUTION
+# =====================================================
+
+builder.add_edge(
+    "alert_node",
+    END
 )
 
 
