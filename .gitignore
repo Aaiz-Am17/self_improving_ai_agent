@@ -1,17 +1,90 @@
+# =========================
+# Python
+# =========================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 
+# =========================
+# Virtual Environments
+# =========================
 venv/
+.env/
+.venv/
+
+# =========================
+# Environment Variables
+# =========================
 .env
+.env.*
 
-checkpoint_db.sqlite
+# =========================
+# Databases
+# =========================
+*.db
+*.sqlite
+*.sqlite3
 
+# =========================
+# Chroma / Vector DB
+# =========================
 chroma_db/
-vector_db/
+vector_store/
+*.parquet
 
+# =========================
+# LangGraph Checkpoints
+# =========================
+checkpoints/
+checkpoint_db/
+state_store/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Model Artifacts
+# =========================
+models/
 *.bin
 *.pt
-*.ckpt
+*.pth
 *.safetensors
+
+# =========================
+# Evaluation Outputs
+# =========================
+eval_results/
+reports/
+
+# =========================
+# IDE Files
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Build Files
+# =========================
+dist/
+build/
+*.egg-info/
+
+# =========================
+# Docker
+# =========================
+docker_data/
