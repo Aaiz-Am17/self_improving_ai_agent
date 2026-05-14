@@ -7,7 +7,7 @@ from src.evaluation.observability_logger import (
     log_workflow_event
 )
 
-from src.config.paths import (
+from src.configs.paths import (
     REPORTS_DIR
 )
 
