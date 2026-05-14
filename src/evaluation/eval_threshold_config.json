@@ -1,0 +1,6 @@
+{
+    "min_relevancy": 0.70,
+    "min_hallucination": 0.70,
+    "min_tool_accuracy": 0.70,
+    "min_final_score": 0.75
+}
