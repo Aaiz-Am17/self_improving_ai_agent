@@ -8,7 +8,7 @@ from src.evaluation.observability_logger import (
 )
 
 from src.configs.paths import (
-    REPORTS_DIR
+    REPORT_DIR
 )
 
 
@@ -17,7 +17,7 @@ from src.configs.paths import (
 # =====================================================
 
 os.makedirs(
-    REPORTS_DIR,
+    REPORT_DIR,
     exist_ok=True
 )
 
@@ -64,14 +64,14 @@ def report_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     markdown_report_path = os.path.join(
 
-        REPORTS_DIR,
+        REPORT_DIR,
 
         f"evaluation_report_{timestamp}.md"
     )
 
     json_report_path = os.path.join(
 
-        REPORTS_DIR,
+        REPORT_DIR,
 
         f"evaluation_report_{timestamp}.json"
     )
