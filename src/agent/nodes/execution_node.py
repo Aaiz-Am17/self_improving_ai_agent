@@ -1,6 +1,7 @@
 import pandas as pd
 
 from sklearn.impute import SimpleImputer
+
 from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler
@@ -18,8 +19,20 @@ from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.metrics import accuracy_score
 
+from joblib import dump
+
+from src.evaluation.timing_utils import (
+    start_timer,
+    end_timer
+)
+
+from src.observability.telemetry import (
+    build_telemetry_payload
+)
+
 
 def execution_node(state):
+
     """
     Execution Agent
 
@@ -30,12 +43,19 @@ def execution_node(state):
     - evaluating performance
     """
 
+    timer = start_timer()
+
     dataset_path = state.get(
         "dataset_path"
     )
 
     preprocessing_plan = state.get(
         "preprocessing_plan"
+    )
+
+    tool_usage_log = state.get(
+        "tool_usage_log",
+        []
     )
 
     # ============================================
@@ -178,6 +198,82 @@ def execution_node(state):
         predictions
     )
 
+    # ============================================
+    # SAVE MODEL
+    # ============================================
+
+    model_path = "trained_model.pkl"
+
+    dump(
+        model_pipeline,
+        model_path
+    )
+
+    # ============================================
+    # PIPELINE OUTPUT
+    # ============================================
+
+    pipeline_output = {
+
+        "model_type": "RandomForestClassifier",
+
+        "accuracy": float(accuracy),
+
+        "target_column": target_column,
+
+        "numeric_columns": numeric_columns,
+
+        "categorical_columns": categorical_columns
+    }
+
+    # ============================================
+    # TOOL TRACKING
+    # ============================================
+
+    tool_usage_log.extend([
+
+        "SimpleImputer",
+
+        "StandardScaler",
+
+        "OneHotEncoder",
+
+        "RandomForestClassifier"
+    ])
+
+    # ============================================
+    # OBSERVABILITY
+    # ============================================
+
+    execution_time = end_timer(timer)
+
+    node_execution_times = state.get(
+        "node_execution_times",
+        {}
+    )
+
+    workflow_path = state.get(
+        "workflow_path",
+        []
+    )
+
+    node_execution_times[
+        "execution_agent"
+    ] = execution_time
+
+    workflow_path.append(
+        "execution_agent"
+    )
+
+    telemetry_payload = build_telemetry_payload(
+
+        thread_id=state.get("thread_id", ""),
+
+        current_agent="execution_agent",
+
+        execution_status="completed"
+    )
+
     print("\n==========================")
     print("MODEL TRAINED SUCCESSFULLY")
     print("==========================")
@@ -190,5 +286,17 @@ def execution_node(state):
 
         "model_accuracy": float(accuracy),
 
-        "current_agent": "execution_agent"
+        "trained_model_path": model_path,
+
+        "pipeline_output": pipeline_output,
+
+        "tool_usage_log": tool_usage_log,
+
+        "current_agent": "execution_agent",
+
+        "node_execution_times": node_execution_times,
+
+        "workflow_path": workflow_path,
+
+        "telemetry_data": telemetry_payload
     }

@@ -1,4 +1,5 @@
 def main_router(state):
+
     """
     Main deterministic router for the
     Industrial Agentic AutoML workflow.
@@ -37,10 +38,19 @@ def main_router(state):
         return "validator"
 
     # =====================================================
+    # STOP IF REJECTED
+    # =====================================================
+
+    if state.get("approval_status") == "rejected":
+
+        return "finish"
+
+    # =====================================================
     # STEP 5 -> EXECUTION
     # =====================================================
 
     if (
+
         state.get("approval_status") == "approved"
         and not state.get("model_accuracy")
     ):
@@ -52,6 +62,7 @@ def main_router(state):
     # =====================================================
 
     if (
+
         state.get("model_accuracy")
         and not state.get("evaluation_status")
     ):
@@ -63,6 +74,7 @@ def main_router(state):
     # =====================================================
 
     if (
+
         state.get("evaluation_status") == "completed"
         and not state.get("evaluation_report_path")
     ):

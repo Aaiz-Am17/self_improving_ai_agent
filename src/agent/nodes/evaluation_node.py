@@ -1,18 +1,22 @@
 from typing import Dict, Any
 
 from src.evaluation.evaluation_metrics import (
+
     keyword_relevancy_score
 )
 
 from src.evaluation.hallucination_detector import (
+
     detect_hallucinations
 )
 
 from src.evaluation.tool_accuracy import (
+
     evaluate_tool_usage
 )
 
 from src.evaluation.observability_logger import (
+
     log_workflow_event
 )
 
@@ -28,12 +32,20 @@ from src.evaluation.thresholds import (
 )
 
 from src.evaluation.timing_utils import (
+
     start_timer,
+
     end_timer
+)
+
+from src.observability.telemetry import (
+
+    build_telemetry_payload
 )
 
 
 def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
+
     """
     Advanced workflow evaluation node.
     """
@@ -60,12 +72,12 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     # =====================================================
-    # EXPECTED EVALUATION TARGETS
+    # EXPECTED TARGETS
     # =====================================================
 
     expected_keywords = [
 
-        "missing values",
+        "missing",
 
         "encoding",
 
@@ -75,6 +87,8 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     ]
 
     expected_tools = [
+
+        "inspect_dataset",
 
         "detect_missing_values",
 
@@ -142,7 +156,7 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # =====================================================
-    # OBSERVABILITY TIMING
+    # OBSERVABILITY
     # =====================================================
 
     evaluation_time = end_timer(timer)
@@ -153,6 +167,15 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     workflow_path.append(
         "evaluation_node"
+    )
+
+    telemetry_payload = build_telemetry_payload(
+
+        thread_id=state.get("thread_id", ""),
+
+        current_agent="evaluation_node",
+
+        execution_status="completed"
     )
 
     # =====================================================
@@ -185,5 +208,7 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
         "node_execution_times": node_execution_times,
 
-        "workflow_path": workflow_path
+        "workflow_path": workflow_path,
+
+        "telemetry_data": telemetry_payload
     }

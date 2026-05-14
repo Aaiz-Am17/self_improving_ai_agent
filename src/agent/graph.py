@@ -55,6 +55,7 @@ from src.persistence.checkpointer import (
 # =====================================================
 
 def security_router(state: AutoMLState) -> str:
+
     """
     Determines whether the request is safe
     enough to continue into the workflow.
@@ -125,7 +126,7 @@ builder.add_node(
 
 
 # =====================================================
-# EVALUATION NODES
+# EVALUATION + REPORTING
 # =====================================================
 
 builder.add_node(
@@ -140,7 +141,7 @@ builder.add_node(
 
 
 # =====================================================
-# GRAPH ENTRY POINT
+# ENTRY POINT
 # =====================================================
 
 builder.set_entry_point(
@@ -168,7 +169,7 @@ builder.add_conditional_edges(
 
 
 # =====================================================
-# ALERT NODE
+# ALERT NODE TERMINATION
 # =====================================================
 
 builder.add_edge(
@@ -178,7 +179,7 @@ builder.add_edge(
 
 
 # =====================================================
-# CONDITIONAL ROUTING
+# ROUTING MAP
 # =====================================================
 
 routing_map = {
@@ -200,6 +201,10 @@ routing_map = {
     "finish": END
 }
 
+
+# =====================================================
+# CONDITIONAL ROUTING
+# =====================================================
 
 builder.add_conditional_edges(
 

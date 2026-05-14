@@ -1,4 +1,18 @@
+from src.evaluation.timing_utils import (
+
+    start_timer,
+
+    end_timer
+)
+
+from src.observability.telemetry import (
+
+    build_telemetry_payload
+)
+
+
 def validator_node(state):
+
     """
     Validator / HITL Agent
 
@@ -7,6 +21,8 @@ def validator_node(state):
     - requesting human approval
     - pausing execution before pipeline execution
     """
+
+    timer = start_timer()
 
     preprocessing_plan = state.get(
         "preprocessing_plan",
@@ -28,6 +44,43 @@ def validator_node(state):
         "\nEnter decision: "
     )
 
+    # =====================================================
+    # OBSERVABILITY
+    # =====================================================
+
+    execution_time = end_timer(timer)
+
+    node_execution_times = state.get(
+        "node_execution_times",
+        {}
+    )
+
+    workflow_path = state.get(
+        "workflow_path",
+        []
+    )
+
+    node_execution_times[
+        "validator"
+    ] = execution_time
+
+    workflow_path.append(
+        "validator"
+    )
+
+    telemetry_payload = build_telemetry_payload(
+
+        thread_id=state.get("thread_id", ""),
+
+        current_agent="validator",
+
+        execution_status="completed"
+    )
+
+    # =====================================================
+    # APPROVED
+    # =====================================================
+
     if decision == "1":
 
         return {
@@ -36,16 +89,30 @@ def validator_node(state):
 
             "execution_status": "ready_for_execution",
 
-            "current_agent": "validator"
+            "current_agent": "validator",
+
+            "node_execution_times": node_execution_times,
+
+            "workflow_path": workflow_path,
+
+            "telemetry_data": telemetry_payload
         }
 
-    else:
+    # =====================================================
+    # REJECTED
+    # =====================================================
 
-        return {
+    return {
 
-            "approval_status": "rejected",
+        "approval_status": "rejected",
 
-            "execution_status": "stopped",
+        "execution_status": "stopped",
 
-            "current_agent": "validator"
-        }
+        "current_agent": "validator",
+
+        "node_execution_times": node_execution_times,
+
+        "workflow_path": workflow_path,
+
+        "telemetry_data": telemetry_payload
+    }

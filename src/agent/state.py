@@ -1,10 +1,13 @@
 from typing import TypedDict, Optional, Dict, List, Any
+
 from langchain_core.messages import BaseMessage
 
 
 class AutoMLState(TypedDict):
+
     """
-    Central shared state across the LangGraph workflow.
+    Central shared state across the
+    Industrial Agentic AutoML workflow.
     """
 
     # =====================================================
@@ -66,6 +69,12 @@ class AutoMLState(TypedDict):
     next_step: Optional[str]
 
     # =====================================================
+    # TOOL TRACKING
+    # =====================================================
+
+    tool_usage_log: Optional[List[str]]
+
+    # =====================================================
     # PERSISTENCE
     # =====================================================
 
@@ -80,16 +89,36 @@ class AutoMLState(TypedDict):
     security_flags: Optional[List[str]]
 
     # =====================================================
-    # OBSERVABILITY
+    # OBSERVABILITY + TELEMETRY
     # =====================================================
 
     trace_id: Optional[str]
 
-    node_execution_times: Optional[Dict[str, float]]
-
-    tool_usage_log: Optional[List[str]]
-
     workflow_path: Optional[List[str]]
+
+    node_execution_times: Optional[Dict]
+
+    telemetry_data: Optional[Dict]
+
+    trace_file_path: Optional[str]
+
+    replay_available: Optional[bool]
+
+    # =====================================================
+    # FEEDBACK + HITL
+    # =====================================================
+
+    feedback_score: Optional[int]
+
+    feedback_comment: Optional[str]
+
+    # =====================================================
+    # API + STREAMING
+    # =====================================================
+
+    api_request_id: Optional[str]
+
+    streaming_status: Optional[str]
 
     # =====================================================
     # EVALUATION
@@ -106,3 +135,9 @@ class AutoMLState(TypedDict):
     evaluation_status: Optional[str]
 
     evaluation_report_path: Optional[str]
+
+    # =====================================================
+    # REPORTING
+    # =====================================================
+
+    generated_report: Optional[Dict]

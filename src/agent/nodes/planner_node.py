@@ -1,4 +1,18 @@
+from src.evaluation.timing_utils import (
+
+    start_timer,
+
+    end_timer
+)
+
+from src.observability.telemetry import (
+
+    build_telemetry_payload
+)
+
+
 def planner_node(state):
+
     """
     Pipeline Architect Agent
 
@@ -9,6 +23,8 @@ def planner_node(state):
     - missing value strategies
     """
 
+    timer = start_timer()
+
     feature_analysis = state.get(
         "feature_analysis",
         {}
@@ -17,6 +33,11 @@ def planner_node(state):
     missing_values = state.get(
         "missing_values",
         {}
+    )
+
+    tool_usage_log = state.get(
+        "tool_usage_log",
+        []
     )
 
     # =====================================================
@@ -54,10 +75,6 @@ def planner_node(state):
 
     preprocessing_plan = {
 
-        # ---------------------------------------------
-        # Missing value handling
-        # ---------------------------------------------
-
         "missing_value_strategy": {
 
             "numeric_columns": {
@@ -89,20 +106,12 @@ def planner_node(state):
             }
         },
 
-        # ---------------------------------------------
-        # Encoding strategy
-        # ---------------------------------------------
-
         "encoding_strategy": {
 
             "one_hot_encoding": low_cardinality,
 
             "target_encoding": high_cardinality
         },
-
-        # ---------------------------------------------
-        # Scaling strategy
-        # ---------------------------------------------
 
         "scaling_strategy": {
 
@@ -112,9 +121,63 @@ def planner_node(state):
         }
     }
 
+    # =====================================================
+    # TOOL TRACKING
+    # =====================================================
+
+    tool_usage_log.extend([
+
+        "median_imputation",
+
+        "one_hot_encoding",
+
+        "StandardScaler"
+    ])
+
+    # =====================================================
+    # OBSERVABILITY
+    # =====================================================
+
+    execution_time = end_timer(timer)
+
+    node_execution_times = state.get(
+        "node_execution_times",
+        {}
+    )
+
+    workflow_path = state.get(
+        "workflow_path",
+        []
+    )
+
+    node_execution_times[
+        "pipeline_architect"
+    ] = execution_time
+
+    workflow_path.append(
+        "pipeline_architect"
+    )
+
+    telemetry_payload = build_telemetry_payload(
+
+        thread_id=state.get("thread_id", ""),
+
+        current_agent="pipeline_architect",
+
+        execution_status="completed"
+    )
+
     return {
 
         "preprocessing_plan": preprocessing_plan,
 
-        "current_agent": "pipeline_architect"
+        "tool_usage_log": tool_usage_log,
+
+        "current_agent": "pipeline_architect",
+
+        "node_execution_times": node_execution_times,
+
+        "workflow_path": workflow_path,
+
+        "telemetry_data": telemetry_payload
     }
