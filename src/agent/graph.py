@@ -1,54 +1,20 @@
-from langgraph.graph import (
-    StateGraph,
-    END
-)
+from langgraph.graph import StateGraph, END
 
 from src.agent.state import AutoMLState
 
-from src.agent.nodes.dataset_node import (
-    dataset_analyst_node
-)
+from src.agent.nodes.dataset_node import dataset_analyst_node
+from src.agent.nodes.rag_node import rag_node
+from src.agent.nodes.planner_node import planner_node
+from src.agent.nodes.validator_node import validator_node
+from src.agent.nodes.execution_node import execution_node
+from src.agent.nodes.guardrail_node import guardrail_node
+from src.agent.nodes.alert_node import alert_node
+from src.agent.nodes.evaluation_node import evaluation_node
+from src.agent.nodes.report_node import report_node
 
-from src.agent.nodes.rag_node import (
-    rag_node
-)
+from src.agent.routers.main_router import main_router
 
-from src.agent.nodes.planner_node import (
-    planner_node
-)
-
-from src.agent.nodes.validator_node import (
-    validator_node
-)
-
-from src.agent.nodes.execution_node import (
-    execution_node
-)
-
-from src.agent.nodes.guardrail_node import (
-    guardrail_node
-)
-
-from src.agent.nodes.alert_node import (
-    alert_node
-)
-
-from src.agent.nodes.evaluation_node import (
-    evaluation_node
-)
-
-from src.agent.nodes.report_node import (
-    report_node
-)
-
-from src.agent.routers.main_router import (
-    main_router
-)
-
-from src.persistence.checkpointer import (
-    checkpointer
-)
-
+from src.persistence.checkpointer import checkpointer
 
 # =====================================================
 # SECURITY ROUTER
