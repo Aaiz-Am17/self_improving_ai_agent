@@ -33,6 +33,14 @@ from src.agent.nodes.alert_node import (
     alert_node
 )
 
+from src.agent.nodes.evaluation_node import (
+    evaluation_node
+)
+
+from src.agent.nodes.report_node import (
+    report_node
+)
+
 from src.agent.routers.main_router import (
     main_router
 )
@@ -49,12 +57,16 @@ from src.persistence.checkpointer import (
 def security_router(state: AutoMLState) -> str:
     """
     Determines whether the request is safe
-    enough to continue into the main workflow.
+    enough to continue into the workflow.
     """
 
-    execution_status = state.get("execution_status", "")
+    execution_status = state.get(
+        "execution_status",
+        ""
+    )
 
     if execution_status == "BLOCKED":
+
         return "alert_node"
 
     return "main_workflow"
@@ -68,7 +80,7 @@ builder = StateGraph(AutoMLState)
 
 
 # =====================================================
-# ADD SECURITY NODES
+# SECURITY NODES
 # =====================================================
 
 builder.add_node(
@@ -83,7 +95,7 @@ builder.add_node(
 
 
 # =====================================================
-# ADD MAIN AGENT NODES
+# MAIN AGENT NODES
 # =====================================================
 
 builder.add_node(
@@ -113,10 +125,27 @@ builder.add_node(
 
 
 # =====================================================
+# EVALUATION NODES
+# =====================================================
+
+builder.add_node(
+    "evaluation_node",
+    evaluation_node
+)
+
+builder.add_node(
+    "report_node",
+    report_node
+)
+
+
+# =====================================================
 # GRAPH ENTRY POINT
 # =====================================================
 
-builder.set_entry_point("guardrail_node")
+builder.set_entry_point(
+    "guardrail_node"
+)
 
 
 # =====================================================
@@ -130,14 +159,16 @@ builder.add_conditional_edges(
     security_router,
 
     {
+
         "alert_node": "alert_node",
+
         "main_workflow": "dataset_analyst"
     }
 )
 
 
 # =====================================================
-# ALERT NODE ENDS EXECUTION
+# ALERT NODE
 # =====================================================
 
 builder.add_edge(
@@ -147,8 +178,28 @@ builder.add_edge(
 
 
 # =====================================================
-# CONDITIONAL EDGES
+# CONDITIONAL ROUTING
 # =====================================================
+
+routing_map = {
+
+    "dataset_analyst": "dataset_analyst",
+
+    "rag_agent": "rag_agent",
+
+    "pipeline_architect": "pipeline_architect",
+
+    "validator": "validator",
+
+    "execution_agent": "execution_agent",
+
+    "evaluation_node": "evaluation_node",
+
+    "report_node": "report_node",
+
+    "finish": END
+}
+
 
 builder.add_conditional_edges(
 
@@ -156,21 +207,8 @@ builder.add_conditional_edges(
 
     main_router,
 
-    {
-        "dataset_analyst": "dataset_analyst",
-
-        "rag_agent": "rag_agent",
-
-        "pipeline_architect": "pipeline_architect",
-
-        "validator": "validator",
-
-        "execution_agent": "execution_agent",
-
-        "finish": END
-    }
+    routing_map
 )
-
 
 builder.add_conditional_edges(
 
@@ -178,21 +216,8 @@ builder.add_conditional_edges(
 
     main_router,
 
-    {
-        "dataset_analyst": "dataset_analyst",
-
-        "rag_agent": "rag_agent",
-
-        "pipeline_architect": "pipeline_architect",
-
-        "validator": "validator",
-
-        "execution_agent": "execution_agent",
-
-        "finish": END
-    }
+    routing_map
 )
-
 
 builder.add_conditional_edges(
 
@@ -200,21 +225,8 @@ builder.add_conditional_edges(
 
     main_router,
 
-    {
-        "dataset_analyst": "dataset_analyst",
-
-        "rag_agent": "rag_agent",
-
-        "pipeline_architect": "pipeline_architect",
-
-        "validator": "validator",
-
-        "execution_agent": "execution_agent",
-
-        "finish": END
-    }
+    routing_map
 )
-
 
 builder.add_conditional_edges(
 
@@ -222,21 +234,8 @@ builder.add_conditional_edges(
 
     main_router,
 
-    {
-        "dataset_analyst": "dataset_analyst",
-
-        "rag_agent": "rag_agent",
-
-        "pipeline_architect": "pipeline_architect",
-
-        "validator": "validator",
-
-        "execution_agent": "execution_agent",
-
-        "finish": END
-    }
+    routing_map
 )
-
 
 builder.add_conditional_edges(
 
@@ -244,19 +243,25 @@ builder.add_conditional_edges(
 
     main_router,
 
-    {
-        "dataset_analyst": "dataset_analyst",
+    routing_map
+)
 
-        "rag_agent": "rag_agent",
+builder.add_conditional_edges(
 
-        "pipeline_architect": "pipeline_architect",
+    "evaluation_node",
 
-        "validator": "validator",
+    main_router,
 
-        "execution_agent": "execution_agent",
+    routing_map
+)
 
-        "finish": END
-    }
+builder.add_conditional_edges(
+
+    "report_node",
+
+    main_router,
+
+    routing_map
 )
 
 

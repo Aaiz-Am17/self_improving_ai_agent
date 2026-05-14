@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Dict, List
+from typing import TypedDict, Optional, Dict, List, Any
 from langchain_core.messages import BaseMessage
 
 
@@ -77,8 +77,32 @@ class AutoMLState(TypedDict):
 
     guardrail_status: Optional[str]
 
+    security_flags: Optional[List[str]]
+
     # =====================================================
     # OBSERVABILITY
     # =====================================================
 
     trace_id: Optional[str]
+
+    node_execution_times: Optional[Dict[str, float]]
+
+    tool_usage_log: Optional[List[str]]
+
+    workflow_path: Optional[List[str]]
+
+    # =====================================================
+    # EVALUATION
+    # =====================================================
+
+    evaluation_metrics: Optional[Dict[str, Any]]
+
+    hallucination_score: Optional[float]
+
+    relevancy_score: Optional[float]
+
+    tool_accuracy_score: Optional[float]
+
+    evaluation_status: Optional[str]
+
+    evaluation_report_path: Optional[str]

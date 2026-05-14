@@ -1,0 +1,11 @@
+"""
+Evaluation quality thresholds.
+"""
+
+MIN_RELEVANCY_SCORE = 0.60
+
+MIN_HALLUCINATION_SCORE = 0.75
+
+MIN_TOOL_ACCURACY = 0.50
+
+MIN_FINAL_SCORE = 0.70

@@ -1,0 +1,56 @@
+[
+    {
+        "id": 1,
+        "query": "Analyze the Titanic dataset and identify missing values.",
+        "expected_keywords": [
+            "missing values",
+            "Age",
+            "Cabin",
+            "Embarked"
+        ],
+        "expected_tools": [
+            "detect_missing_values"
+        ]
+    },
+
+    {
+        "id": 2,
+        "query": "Recommend preprocessing steps for categorical columns.",
+        "expected_keywords": [
+            "encoding",
+            "categorical",
+            "one-hot",
+            "label encoding"
+        ],
+        "expected_tools": [
+            "analyze_features"
+        ]
+    },
+
+    {
+        "id": 3,
+        "query": "Explain how to handle class imbalance.",
+        "expected_keywords": [
+            "SMOTE",
+            "oversampling",
+            "undersampling",
+            "class imbalance"
+        ],
+        "expected_tools": [
+            "retrieve_ml_knowledge"
+        ]
+    },
+
+    {
+        "id": 4,
+        "query": "Analyze outliers in the dataset.",
+        "expected_keywords": [
+            "outliers",
+            "IQR",
+            "distribution"
+        ],
+        "expected_tools": [
+            "analyze_features"
+        ]
+    }
+]
