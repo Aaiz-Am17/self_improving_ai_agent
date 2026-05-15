@@ -8,12 +8,13 @@ def validator_node(state):
 
     Modes:
     - local → interactive approval
-    - ci → auto approval
+    - ci/api → auto approval
     """
 
     timer = start_timer()
 
     preprocessing_plan = state.get("preprocessing_plan", {})
+
     runtime_mode = state.get("runtime_mode", "local")
 
     print("\n==============================")
@@ -31,10 +32,17 @@ def validator_node(state):
     # DECISION HANDLING
     # =====================================================
 
+    decision = None
+
     if runtime_mode == "local":
         decision = input("\nEnter decision: ")
+
     else:
-        # CI/CD MODE → AUTO APPROVE
+        # CI/CD / API MODE → AUTO APPROVE
+        decision = state.get("human_feedback", {}).get("approval", "1")
+
+    # fallback safety
+    if decision is None:
         decision = "1"
 
     # =====================================================
