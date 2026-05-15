@@ -1,5 +1,4 @@
 from typing import TypedDict, Optional, Dict, List, Any
-
 from langchain_core.messages import BaseMessage
 
 
@@ -21,11 +20,8 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     dataset_path: Optional[str]
-
     dataset_summary: Optional[Dict]
-
     missing_values: Optional[Dict]
-
     feature_analysis: Optional[Dict]
 
     # =====================================================
@@ -39,7 +35,6 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     preprocessing_plan: Optional[Dict]
-
     pipeline_output: Optional[Dict]
 
     # =====================================================
@@ -47,7 +42,6 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     human_feedback: Optional[Dict]
-
     approval_status: Optional[str]
 
     # =====================================================
@@ -55,17 +49,16 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     model_accuracy: Optional[float]
-
     trained_model_path: Optional[str]
 
     # =====================================================
-    # RUNTIME TRACKING
+    # RUNTIME CONTROL
     # =====================================================
 
+    runtime_mode: Optional[str]  # "local" | "ci"
+
     execution_status: Optional[str]
-
     current_agent: Optional[str]
-
     next_step: Optional[str]
 
     # =====================================================
@@ -85,7 +78,6 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     guardrail_status: Optional[str]
-
     security_flags: Optional[List[str]]
 
     # =====================================================
@@ -93,15 +85,10 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     trace_id: Optional[str]
-
     workflow_path: Optional[List[str]]
-
     node_execution_times: Optional[Dict]
-
     telemetry_data: Optional[Dict]
-
     trace_file_path: Optional[str]
-
     replay_available: Optional[bool]
 
     # =====================================================
@@ -109,7 +96,6 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     feedback_score: Optional[int]
-
     feedback_comment: Optional[str]
 
     # =====================================================
@@ -117,7 +103,6 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     api_request_id: Optional[str]
-
     streaming_status: Optional[str]
 
     # =====================================================
@@ -125,15 +110,10 @@ class AutoMLState(TypedDict):
     # =====================================================
 
     evaluation_metrics: Optional[Dict[str, Any]]
-
     hallucination_score: Optional[float]
-
     relevancy_score: Optional[float]
-
     tool_accuracy_score: Optional[float]
-
     evaluation_status: Optional[str]
-
     evaluation_report_path: Optional[str]
 
     # =====================================================

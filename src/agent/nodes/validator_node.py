@@ -7,13 +7,14 @@ def validator_node(state):
     Validator / HITL Agent
 
     Modes:
-    1. Interactive mode (local dev)
-    2. Auto mode (CI/CD, Docker, API)
+    - local → interactive approval
+    - ci → auto approval
     """
 
     timer = start_timer()
 
     preprocessing_plan = state.get("preprocessing_plan", {})
+    runtime_mode = state.get("runtime_mode", "local")
 
     print("\n==============================")
     print("HUMAN APPROVAL REQUIRED")
@@ -27,13 +28,13 @@ def validator_node(state):
     print("2 -> reject")
 
     # =====================================================
-    # SAFE DECISION HANDLING
+    # DECISION HANDLING
     # =====================================================
 
-    decision = state.get("human_feedback", {}).get("approval")
-
-    # If no human feedback provided (CI/CD mode), auto-approve
-    if decision is None:
+    if runtime_mode == "local":
+        decision = input("\nEnter decision: ")
+    else:
+        # CI/CD MODE → AUTO APPROVE
         decision = "1"
 
     # =====================================================
@@ -55,11 +56,10 @@ def validator_node(state):
     )
 
     # =====================================================
-    # APPROVAL LOGIC
+    # RESULT
     # =====================================================
 
     if decision == "1":
-
         return {
             "approval_status": "approved",
             "execution_status": "ready_for_execution",
