@@ -27,7 +27,10 @@ initial_state = {
         "data/datasets/titanic.csv",
 
     "thread_id":
-        "ci_evaluation_session"
+        "ci_evaluation_session",
+        
+    "runtime_mode": 
+        "ci"  # <--- ADD THIS LINE
 }
 
 
