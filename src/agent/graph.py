@@ -241,5 +241,6 @@ builder.add_conditional_edges(
 # =====================================================
 
 graph = builder.compile(
-    checkpointer=checkpointer
+    checkpointer=checkpointer,
+    interrupt_before=["validator"]
 )

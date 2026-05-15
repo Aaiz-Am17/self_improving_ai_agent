@@ -1,6 +1,4 @@
-from fastapi import APIRouter, HTTPException
-import asyncio
-
+from fastapi import APIRouter
 from langchain_core.messages import HumanMessage
 from src.agent.graph import graph
 from src.api.schemas.chat_schema import ChatRequest
@@ -8,27 +6,36 @@ from src.api.schemas.chat_schema import ChatRequest
 router = APIRouter()
 
 @router.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-
-    initial_state = {
-        "messages": [
-            HumanMessage(content=request.message)
-        ],
-        "dataset_path": request.dataset_path,
-        "thread_id": request.thread_id,
-        "runtime_mode": "api"  # Bypasses the headless input() error
-    }
-
-    # Required for LangGraph memory persistence
+def chat_endpoint(request: ChatRequest):
+    
     config = {"configurable": {"thread_id": request.thread_id}}
-
-    try:
-        # Run graph in a separate thread to avoid blocking FastAPI's event loop
-        result = await asyncio.to_thread(graph.invoke, initial_state, config)
-
-        return {
-            "response": result
+    
+    # CASE 1: RESUMING FROM A PAUSE (User clicked Approve/Reject)
+    if request.approval_decision:
+        # Update the state with the human's decision
+        graph.update_state(
+            config, 
+            {"human_feedback": {"approval": request.approval_decision}, "runtime_mode": "api"}, 
+            as_node="pipeline_architect"
+        )
+        # Resume the graph with None as input
+        result = graph.invoke(None, config=config)
+    
+    # CASE 2: NEW CHAT MESSAGE
+    else:
+        initial_state = {
+            "messages": [HumanMessage(content=request.message)],
+            "dataset_path": request.dataset_path,
+            "thread_id": request.thread_id,
+            "runtime_mode": "api"
         }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        result = graph.invoke(initial_state, config=config)
+
+    # Check if the graph is currently paused
+    state_snapshot = graph.get_state(config)
+    needs_approval = len(state_snapshot.next) > 0 and state_snapshot.next[0] == "validator"
+
+    return {
+        "response": result,
+        "needs_approval": needs_approval
+    }
