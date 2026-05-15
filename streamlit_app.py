@@ -84,15 +84,19 @@ if st.session_state.needs_approval:
                     "approval_decision": "1"
                 }
                 res = requests.post(f"{API_URL}/chat", json=payload)
-                data = res.json()
                 
-                st.session_state.needs_approval = False
-                
-                answer = "Plan Approved. Model Execution Complete!\n\n"
-                answer += f"🎯 **Final Accuracy:** `{data['response'].get('model_accuracy', 'N/A')}`"
-                
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-                st.rerun()
+                # Check if the backend accepted the request
+                if res.status_code == 200:
+                    data = res.json()
+                    st.session_state.needs_approval = False
+                    
+                    answer = "Plan Approved. Model Execution Complete!\n\n"
+                    answer += f"🎯 **Final Accuracy:** `{data['response'].get('model_accuracy', 'N/A')}`"
+                    
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                    st.rerun()
+                else:
+                    st.error(f"Backend Error: {res.text}")
 
     with col2:
         if st.button("❌ Reject Plan", type="primary", use_container_width=True):
