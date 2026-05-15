@@ -52,9 +52,13 @@ def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     timer = start_timer()
 
-    response = str(
-        state.get("pipeline_output", "")
-    )
+    pipeline_output = state.get("pipeline_output", {})
+    response = " ".join([
+        str(pipeline_output.get("model_type", "")),
+        str(pipeline_output.get("target_column", "")),
+        " ".join(pipeline_output.get("numeric_columns", [])),
+        " ".join(pipeline_output.get("categorical_columns", []))
+    ])
 
     tool_usage_log = state.get(
         "tool_usage_log",
